@@ -53,7 +53,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-SYSTEM_PROMPT = "Você é um consultor imobiliário especialista. Ajuda pessoas a tomar decisões inteligentes sobre compra, venda, aluguel e investimento em imóveis. Explica financiamentos, analisa contratos em linguagem simples e alerta sobre riscos. Nunca garante valorização. Português do Brasil."
+SYSTEM_PROMPT = """Você é um consultor imobiliário especialista. Ajuda pessoas a tomar decisões inteligentes sobre compra, venda, aluguel e investimento em imóveis. Explica financiamentos, analisa contratos em linguagem simples e alerta sobre riscos. Nunca garante valorização. Português do Brasil.
+
+REGRA CRÍTICA — NUNCA INVENTE NOMES REAIS:
+- NUNCA cite nomes de escolas, hospitais, supermercados, shoppings, ruas ou estabelecimentos específicos de cidades que você não tem certeza absoluta que existem.
+- Ao falar de infraestrutura local, use termos GENÉRICOS: "escolas públicas e particulares da região", "comércio local", "hospitais e UPAs", "linhas de ônibus", "praças e parques".
+- Se precisar exemplificar, diga EXPLICITAMENTE: "verifique com moradores locais ou no Google Maps a existência de X na região".
+- Alucinações com nomes de lugares inexistentes causam dano real ao usuário. Prefira ser genérico e honesto a inventar detalhes locais."""
 
 @st.cache_resource
 def get_cache_consultor_imoveis():
@@ -201,7 +207,10 @@ Dê recomendação clara (COMPRAR ou ALUGAR), explique o raciocínio financeiro,
             with st.spinner("Analisando seu perfil..."):
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
-                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_ca_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    try:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_ca_prompt}], model="compound-beta", max_tokens=2048)
+                    except:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_ca_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                     _res = _r.choices[0].message.content
                     st.session_state["res_ca"] = _res
                     historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Comprar ou Alugar","resumo":f"R${_ca_valor:,.0f}","conteudo":_res})
@@ -240,7 +249,10 @@ Forneça: 1) Parcela inicial e final estimadas com taxa média de mercado 2) Se 
             with st.spinner("Simulando..."):
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
-                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_fn_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    try:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_fn_prompt}], model="compound-beta", max_tokens=2048)
+                    except:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_fn_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                     _res = _r.choices[0].message.content
                     st.session_state["res_fn"] = _res
                     historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Financiamento","resumo":f"R${_fn_valor:,.0f}/{_fn_prazo}a","conteudo":_res})
@@ -255,6 +267,7 @@ Forneça: 1) Parcela inicial e final estimadas com taxa média de mercado 2) Se 
         st.header("📍 Análise de Bairro")
         st.markdown("*Descreva o bairro e a IA avalia pontos positivos, negativos e o que pesquisar antes de decidir.*")
         st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        st.info("⚠️ **Atenção:** A análise é baseada em características gerais da região. A IA **não cita nomes reais** de estabelecimentos para evitar informações incorretas. Confirme sempre detalhes locais no Google Maps ou com moradores.")
         _br1, _br2 = st.columns(2)
         with _br1:
             _br_cidade = st.text_input("Cidade:", key="br_cidade", placeholder="Ex: São Paulo, Belo Horizonte...")
@@ -273,10 +286,34 @@ Forneça: 1) Parcela inicial e final estimadas com taxa média de mercado 2) Se 
 - Obs: {_br_obs or "nenhuma"}
 
 Analise: 1) Características típicas da região 2) Pontos fortes e fracos para este perfil 3) Tendência de valorização 4) O que pesquisar ANTES de fechar 5) Infraestrutura e serviços 6) Alertas de risco"""
-            with st.spinner("Analisando bairro..."):
+            with st.spinner("🔍 Buscando informações reais sobre o bairro..."):
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
-                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_br_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    # Usar compound-beta para busca web real — verifica estabelecimentos que existem
+                    _br_prompt_web = f"""Pesquise na web e analise o bairro/região {_br_nome} em {_br_cidade} para {_br_uso}.
+
+Perfil do comprador: {_br_perfil}
+Prioridades: {", ".join(_br_prior)}
+Preço m²: {_br_m2 or "não informado"}
+Observações: {_br_obs or "nenhuma"}
+
+IMPORTANTE: Pesquise na web e cite APENAS estabelecimentos, escolas, hospitais, linhas de transporte e serviços que você VERIFICOU QUE EXISTEM nesta cidade/bairro. Se não encontrar informações verificadas, diga explicitamente "não encontrei dados verificados sobre X — recomendo pesquisar no Google Maps".
+
+Analise: 1) Características reais da região 2) Estabelecimentos verificados (escolas, hospitais, supermercados, transporte) 3) Pontos fortes e fracos para este perfil 4) Tendência de valorização 5) O que pesquisar antes de fechar"""
+                    try:
+                        # Tentar com compound-beta (tem web search nativo)
+                        _r = _client.chat.completions.create(
+                            messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_br_prompt_web}],
+                            model="compound-beta",
+                            max_tokens=2048
+                        )
+                    except:
+                        # Fallback: modelo padrão sem web search
+                        _r = _client.chat.completions.create(
+                            messages=[{"role":"system","content":SYSTEM_PROMPT + " NUNCA invente nomes de estabelecimentos. Use apenas termos genéricos para infraestrutura local."},{"role":"user","content":_br_prompt_web}],
+                            model="openai/gpt-oss-120b",
+                            max_tokens=2048
+                        )
                     _res = _r.choices[0].message.content
                     st.session_state["res_br"] = _res
                     historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Bairro","resumo":f"{_br_nome}/{_br_cidade}","conteudo":_res})
@@ -317,7 +354,10 @@ Avalie: 1) Preço por m² vs mercado 2) Veredicto (ABAIXO/JUSTO/ACIMA) 3) Fatore
             with st.spinner("Avaliando..."):
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
-                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_av_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    try:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_av_prompt}], model="compound-beta", max_tokens=2048)
+                    except:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_av_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                     _res = _r.choices[0].message.content
                     st.session_state["res_av"] = _res
                     historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Avaliação","resumo":f"R${_av_preco:,.0f} {_av_cidade}","conteudo":_res})
@@ -347,7 +387,10 @@ Analise: 1) CLÁUSULAS PERIGOSAS (destaque cada uma) 2) O que está FALTANDO 3) 
                 with st.spinner("Analisando contrato..."):
                     try:
                         _client = Groq(api_key=st.session_state.api_key)
-                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_co_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                        try:
+                            _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_co_prompt}], model="compound-beta", max_tokens=2048)
+                        except:
+                            _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_co_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                         _res = _r.choices[0].message.content
                         st.session_state["res_co"] = _res
                         historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Contrato","resumo":_co_tipo,"conteudo":_res})
@@ -378,7 +421,10 @@ Para cada armadilha: nome, como acontece, como identificar, como se proteger. Se
             with st.spinner("Listando armadilhas..."):
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
-                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_am_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    try:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_am_prompt}], model="compound-beta", max_tokens=2048)
+                    except:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_am_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                     _res = _r.choices[0].message.content
                     st.session_state["res_am"] = _res
                     historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Armadilhas","resumo":_am_momento,"conteudo":_res})
@@ -415,7 +461,10 @@ Analise: 1) Yield líquido real (vacância, manutenção, IR) 2) Comparação co
             with st.spinner("Analisando investimento..."):
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
-                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_iv_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    try:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_iv_prompt}], model="compound-beta", max_tokens=2048)
+                    except:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_iv_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                     _res = _r.choices[0].message.content
                     st.session_state["res_iv"] = _res
                     historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Investimento","resumo":f"R${_iv_valor:,.0f}","conteudo":_res})
@@ -452,7 +501,10 @@ Oriente: 1) O que verificar ANTES de assinar (RGI, alvará, memorial descritivo)
             with st.spinner("Analisando..."):
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
-                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_pl_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    try:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_pl_prompt}], model="compound-beta", max_tokens=2048)
+                    except:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_pl_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                     _res = _r.choices[0].message.content
                     st.session_state["res_pl"] = _res
                     historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Na Planta","resumo":f"{_pl_const} R${_pl_preco:,.0f}","conteudo":_res})
@@ -489,7 +541,10 @@ Forneça: 1) Análise do poder de barganha 2) Estratégia passo a passo 3) Prime
             with st.spinner("Montando estratégia..."):
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
-                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_ng_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    try:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_ng_prompt}], model="compound-beta", max_tokens=2048)
+                    except:
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_ng_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                     _res = _r.choices[0].message.content
                     st.session_state["res_ng"] = _res
                     historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Negociação","resumo":f"R${_ng_preco:,.0f}→R${_ng_meta:,.0f}","conteudo":_res})
@@ -524,7 +579,10 @@ Simule: 1) Tabela comparativa com números 2) Custo total em 10 e 20 anos 3) Pon
                 with st.spinner("Simulando cenários..."):
                     try:
                         _client = Groq(api_key=st.session_state.api_key)
-                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_sm_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                        try:
+                            _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_sm_prompt}], model="compound-beta", max_tokens=2048)
+                        except:
+                            _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_sm_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
                         _res = _r.choices[0].message.content
                         st.session_state["res_sm"] = _res
                         historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Simulação","resumo":_sm_tipo,"conteudo":_res})
