@@ -151,249 +151,391 @@ elif st.session_state.etapa == "App":
 
     with _tab_home_ci:
         st.title(f"🏠 Olá, {st.session_state.usuario}!")
-        st.markdown(f"*Comprar, alugar ou investir? A IA te ajuda a decidir.*")
+        st.markdown("*Seu consultor imobiliário pessoal — orientação inteligente para cada etapa.*")
         st.markdown("<hr class='divider'>", unsafe_allow_html=True)
-        st.markdown(f"### Bem-vindo ao **Consultor de Imóveis IA**")
-        st.markdown(f"<div class='card'>Use as abas acima para navegar entre as funcionalidades. Cada aba oferece uma ferramenta diferente com IA.</div>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        with col1: st.markdown(f"<div class='stat-box'><div style='font-size:1.8em;'>🏠</div><div style='font-size:0.8em;'>Consultor de Imóveis IA</div></div>", unsafe_allow_html=True)
-        with col2: st.markdown(f"<div class='stat-box'><div style='font-size:1.8em;'>🤖</div><div style='font-size:0.8em;'>Powered by IA</div></div>", unsafe_allow_html=True)
-        with col3: st.markdown(f"<div class='stat-box'><div style='font-size:1.8em;'>💾</div><div style='font-size:0.8em;'>Salve seus dados</div></div>", unsafe_allow_html=True)
+        _c1, _c2, _c3 = st.columns(3)
+        _c1.markdown("<div class='stat-box'><div style='font-size:2em'>🏠</div><b>Compra e Aluguel</b><br><small>Decisão inteligente</small></div>", unsafe_allow_html=True)
+        _c2.markdown("<div class='stat-box'><div style='font-size:2em'>💰</div><b>Financiamento</b><br><small>Simule e compare</small></div>", unsafe_allow_html=True)
+        _c3.markdown("<div class='stat-box'><div style='font-size:2em'>📄</div><b>Contratos</b><br><small>Sem juridiquês</small></div>", unsafe_allow_html=True)
         st.markdown("<hr class='divider'>", unsafe_allow_html=True)
-        col_sv, _ = st.columns([1,3])
-        with col_sv:
-            st.download_button("💾 Salvar dados (.json)", data=json.dumps({k: st.session_state.get(k) for k in list(st.session_state.keys()) if not k.startswith("_") and k not in ("api_key",)}, ensure_ascii=False, indent=2, default=str), file_name=f"consultor_imoveis_{st.session_state.usuario}.json", mime="application/json", key="dl_consul_1")
+        st.markdown("### 🗺️ O que cada aba faz")
+        for _ic, _nm, _desc in [
+            ("⚖️","Comprar ou Alugar","Responde qual é melhor para seu momento financeiro e de vida"),
+            ("💰","Financiamento","Simula parcelas, juros, prazo e compara bancos — você só informa os dados"),
+            ("📍","Análise de Bairro","A IA avalia o bairro que você está considerando"),
+            ("🔍","Avaliação de Imóvel","Descubra se o preço pedido está justo"),
+            ("📄","Análise de Contrato","Cole o contrato e a IA destaca cláusulas perigosas"),
+            ("⚠️","Armadilhas Comuns","Os erros mais comuns e como se proteger"),
+            ("📈","Investimento","Análise de rentabilidade e riscos reais"),
+            ("🏗️","Imóvel na Planta","Tudo que verificar antes de assinar com construtora"),
+            ("💡","Negociação","Estratégia para conseguir desconto e melhores condições"),
+            ("📊","Simulações","Compare cenários de compra, aluguel e investimento"),
+        ]:
+            st.markdown(f"**{_ic} {_nm}** — {_desc}")
 
     with _tab_comprar_alugar:
         st.header("⚖️ Comprar ou Alugar?")
-        prompt_comprar_alugar = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_comprar_alugar", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_comprar_alugar", use_container_width=True):
-            if prompt_comprar_alugar.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_comprar_alugar}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_comprar_alugar = resp.choices[0].message.content
-                        if resultado_comprar_alugar: st.session_state['res_comprar_alug_consul1'] = str(resultado_comprar_alugar)
-                        st.session_state["res_comprar_alugar"] = resultado_comprar_alugar
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Comprar ou Alugar?","resumo":prompt_comprar_alugar[:60],"conteudo":resultado_comprar_alugar})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_comprar_alugar"):
-            st.markdown(f"<div class='card'>{st.session_state['res_comprar_alugar']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_comprar_alugar"], file_name="comprar_alugar_resultado.txt", mime="text/plain", key="dl_comprar_alugar")
+        st.markdown("*Responda as perguntas e a IA decide qual é o melhor caminho para você agora.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _ca1, _ca2 = st.columns(2)
+        with _ca1:
+            _ca_tempo = st.selectbox("Por quanto tempo pretende ficar no local?", ["Menos de 2 anos","2 a 5 anos","Mais de 5 anos","Não sei ainda"], key="ca_tempo")
+            _ca_renda = st.selectbox("Situação financeira atual:", ["Renda estável (CLT/aposentado)","Renda variável (autônomo/freela)","Estou acumulando patrimônio","Tenho reserva mas sem estabilidade"], key="ca_renda")
+            _ca_obj = st.selectbox("Seu principal objetivo:", ["Ter minha própria casa","Flexibilidade para mudar","Investir o dinheiro","Não pagar aluguel"], key="ca_obj")
+        with _ca2:
+            _ca_valor = st.number_input("Valor do imóvel considerado (R$):", min_value=0, value=350000, step=10000, key="ca_valor", format="%d")
+            _ca_aluguel = st.number_input("Aluguel equivalente (R$):", min_value=0, value=2000, step=100, key="ca_aluguel", format="%d")
+            _ca_entrada = st.number_input("Entrada disponível (R$):", min_value=0, value=70000, step=5000, key="ca_entrada", format="%d")
+        _ca_obs = st.text_input("Algum detalhe importante? (opcional):", key="ca_obs", placeholder="Ex: Tenho filho pequeno, moro em SP, já tentei financiamento...")
+        if st.button("⚖️ ANALISAR — COMPRAR OU ALUGAR?", key="btn_ca", use_container_width=True):
+            _ca_prompt = f"""Analise se é melhor COMPRAR ou ALUGAR:
+- Tempo no local: {_ca_tempo}
+- Situação financeira: {_ca_renda}
+- Objetivo: {_ca_obj}
+- Valor do imóvel: R$ {_ca_valor:,.0f}
+- Aluguel equivalente: R$ {_ca_aluguel:,.0f}/mês
+- Entrada disponível: R$ {_ca_entrada:,.0f}
+- Observações: {_ca_obs or "nenhuma"}
+
+Dê recomendação clara (COMPRAR ou ALUGAR), explique o raciocínio financeiro, calcule custo de oportunidade da entrada, e liste prós e contras para este perfil específico."""
+            with st.spinner("Analisando seu perfil..."):
+                try:
+                    _client = Groq(api_key=st.session_state.api_key)
+                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_ca_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    _res = _r.choices[0].message.content
+                    st.session_state["res_ca"] = _res
+                    historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Comprar ou Alugar","resumo":f"R${_ca_valor:,.0f}","conteudo":_res})
+                    st.session_state.historico_consultor_imoveis = historico
+                    st.rerun()
+                except Exception as _e: st.error(f"Erro: {_e}")
+        if st.session_state.get("res_ca"):
+            st.markdown(f"<div class='card'>{st.session_state['res_ca']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar análise", data=st.session_state["res_ca"], file_name="comprar_ou_alugar.txt", key="dl_ca")
 
     with _tab_financiamento:
-        st.header("💰 Calculadora de Financiamento")
-        prompt_financiamento = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_financiamento", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_financiamento", use_container_width=True):
-            if prompt_financiamento.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_financiamento}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_financiamento = resp.choices[0].message.content
-                        if resultado_financiamento: st.session_state['res_financiament_consul2'] = str(resultado_financiamento)
-                        st.session_state["res_financiamento"] = resultado_financiamento
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Calculadora de Financiamento","resumo":prompt_financiamento[:60],"conteudo":resultado_financiamento})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_financiamento"):
-            st.markdown(f"<div class='card'>{st.session_state['res_financiamento']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_financiamento"], file_name="financiamento_resultado.txt", mime="text/plain", key="dl_financiamento")
+        st.header("💰 Simulador de Financiamento")
+        st.markdown("*Preencha os dados e a IA simula, compara bancos e alerta sobre armadilhas.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _fn1, _fn2 = st.columns(2)
+        with _fn1:
+            _fn_tipo = st.selectbox("Tipo de imóvel:", ["Apartamento novo","Apartamento usado","Casa nova","Casa usada","Terreno"], key="fn_tipo")
+            _fn_valor = st.number_input("Valor do imóvel (R$):", min_value=50000, value=350000, step=10000, key="fn_valor", format="%d")
+            _fn_entrada = st.number_input("Entrada disponível (R$):", min_value=0, value=70000, step=5000, key="fn_entrada", format="%d")
+            _fn_prazo = st.selectbox("Prazo desejado (anos):", [10,15,20,25,30,35], index=3, key="fn_prazo")
+        with _fn2:
+            _fn_renda = st.number_input("Renda familiar bruta mensal (R$):", min_value=1000, value=8000, step=500, key="fn_renda", format="%d")
+            _fn_sistema = st.selectbox("Sistema de amortização:", ["Não sei — me explique","SAC (parcelas decrescentes)","PRICE (parcelas fixas)"], key="fn_sistema")
+            _fn_prog = st.selectbox("Programa habitacional:", ["Não sei","Minha Casa Minha Vida","FGTS","Nenhum"], key="fn_prog")
+            _fn_banco = st.selectbox("Preferência de banco?", ["Qualquer — compare para mim","Caixa Econômica","Banco do Brasil","Itaú","Bradesco","Santander"], key="fn_banco")
+        _fn_obs = st.text_input("Algum detalhe adicional?", key="fn_obs", placeholder="Ex: Tenho FGTS de R$30mil, nome limpo, já tenho outro imóvel...")
+        if st.button("💰 SIMULAR FINANCIAMENTO", key="btn_fn", use_container_width=True):
+            _fn_financiado = _fn_valor - _fn_entrada
+            _fn_prompt = f"""Simule e analise este financiamento:
+- Tipo: {_fn_tipo} | Valor: R$ {_fn_valor:,.0f} | Entrada: R$ {_fn_entrada:,.0f} ({_fn_entrada/_fn_valor*100:.0f}%)
+- Financiado: R$ {_fn_financiado:,.0f} | Prazo: {_fn_prazo} anos | Renda: R$ {_fn_renda:,.0f}/mês
+- Sistema: {_fn_sistema} | Programa: {_fn_prog} | Banco: {_fn_banco}
+- Obs: {_fn_obs or "nenhuma"}
+
+Forneça: 1) Parcela inicial e final estimadas com taxa média de mercado 2) Se o comprometimento de renda está dentro dos 30% 3) Comparativo dos melhores bancos para este perfil 4) Custo total do financiamento 5) Alertas sobre taxas embutidas, seguros e CET 6) Dicas para reduzir o custo"""
+            with st.spinner("Simulando..."):
+                try:
+                    _client = Groq(api_key=st.session_state.api_key)
+                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_fn_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    _res = _r.choices[0].message.content
+                    st.session_state["res_fn"] = _res
+                    historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Financiamento","resumo":f"R${_fn_valor:,.0f}/{_fn_prazo}a","conteudo":_res})
+                    st.session_state.historico_consultor_imoveis = historico
+                    st.rerun()
+                except Exception as _e: st.error(f"Erro: {_e}")
+        if st.session_state.get("res_fn"):
+            st.markdown(f"<div class='card'>{st.session_state['res_fn']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar simulação", data=st.session_state["res_fn"], file_name="financiamento.txt", key="dl_fn")
 
     with _tab_bairro:
         st.header("📍 Análise de Bairro")
-        prompt_bairro = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_bairro", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_bairro", use_container_width=True):
-            if prompt_bairro.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_bairro}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_bairro = resp.choices[0].message.content
-                        if resultado_bairro: st.session_state['res_bairro_consul3'] = str(resultado_bairro)
-                        st.session_state["res_bairro"] = resultado_bairro
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Análise de Bairro","resumo":prompt_bairro[:60],"conteudo":resultado_bairro})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_bairro"):
-            st.markdown(f"<div class='card'>{st.session_state['res_bairro']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_bairro"], file_name="bairro_resultado.txt", mime="text/plain", key="dl_bairro")
+        st.markdown("*Descreva o bairro e a IA avalia pontos positivos, negativos e o que pesquisar antes de decidir.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _br1, _br2 = st.columns(2)
+        with _br1:
+            _br_cidade = st.text_input("Cidade:", key="br_cidade", placeholder="Ex: São Paulo, Belo Horizonte...")
+            _br_nome = st.text_input("Bairro ou região:", key="br_nome", placeholder="Ex: Lapa, Savassi, Batel...")
+            _br_perfil = st.selectbox("Seu perfil:", ["Família com filhos","Jovem profissional","Aposentado","Investidor","Estudante"], key="br_perfil")
+        with _br2:
+            _br_uso = st.selectbox("Uso do imóvel:", ["Moradia própria","Aluguel para terceiros","Escritório/comercial"], key="br_uso")
+            _br_prior = st.multiselect("O que mais importa para você?", ["Segurança","Transporte público","Escolas","Comércio próximo","Silêncio","Valorização","Lazer","Acesso rápido ao trabalho"], default=["Segurança","Transporte público"], key="br_prior")
+            _br_m2 = st.text_input("Valor do m² pedido (opcional):", key="br_m2", placeholder="Ex: R$ 8.500/m²")
+        _br_obs = st.text_area("Informações extras:", height=70, key="br_obs", placeholder="Ex: Fica perto de avenida movimentada, tem mata ao redor...")
+        if st.button("📍 ANALISAR BAIRRO", key="btn_br", use_container_width=True):
+            _br_prompt = f"""Analise este bairro para compra/locação:
+- Cidade: {_br_cidade} | Bairro: {_br_nome}
+- Perfil: {_br_perfil} | Uso: {_br_uso}
+- Prioridades: {", ".join(_br_prior)} | Preço m²: {_br_m2 or "não informado"}
+- Obs: {_br_obs or "nenhuma"}
+
+Analise: 1) Características típicas da região 2) Pontos fortes e fracos para este perfil 3) Tendência de valorização 4) O que pesquisar ANTES de fechar 5) Infraestrutura e serviços 6) Alertas de risco"""
+            with st.spinner("Analisando bairro..."):
+                try:
+                    _client = Groq(api_key=st.session_state.api_key)
+                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_br_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    _res = _r.choices[0].message.content
+                    st.session_state["res_br"] = _res
+                    historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Bairro","resumo":f"{_br_nome}/{_br_cidade}","conteudo":_res})
+                    st.session_state.historico_consultor_imoveis = historico
+                    st.rerun()
+                except Exception as _e: st.error(f"Erro: {_e}")
+        if st.session_state.get("res_br"):
+            st.markdown(f"<div class='card'>{st.session_state['res_br']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar análise", data=st.session_state["res_br"], file_name="analise_bairro.txt", key="dl_br")
 
     with _tab_avaliacao_imovel:
         st.header("🔍 Avaliação de Imóvel")
-        prompt_avaliacao_imovel = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_avaliacao_imovel", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_avaliacao_imovel", use_container_width=True):
-            if prompt_avaliacao_imovel.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_avaliacao_imovel}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_avaliacao_imovel = resp.choices[0].message.content
-                        if resultado_avaliacao_imovel: st.session_state['res_avaliacao_im_consul4'] = str(resultado_avaliacao_imovel)
-                        st.session_state["res_avaliacao_imovel"] = resultado_avaliacao_imovel
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Avaliação de Imóvel","resumo":prompt_avaliacao_imovel[:60],"conteudo":resultado_avaliacao_imovel})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_avaliacao_imovel"):
-            st.markdown(f"<div class='card'>{st.session_state['res_avaliacao_imovel']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_avaliacao_imovel"], file_name="avaliacao_imovel_resultado.txt", mime="text/plain", key="dl_avaliacao_imovel")
+        st.markdown("*Descreva o imóvel e descubra se o preço pedido está justo.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _av1, _av2 = st.columns(2)
+        with _av1:
+            _av_tipo = st.selectbox("Tipo:", ["Apartamento","Casa","Terreno","Comercial","Rural"], key="av_tipo")
+            _av_cidade = st.text_input("Cidade/Bairro:", key="av_cidade", placeholder="Ex: Campinas - Cambuí")
+            _av_area = st.number_input("Área (m²):", min_value=10, value=80, key="av_area")
+            _av_quartos = st.selectbox("Quartos:", [1,2,3,4,5], index=1, key="av_quartos")
+            _av_vagas = st.selectbox("Vagas de garagem:", [0,1,2,3], key="av_vagas")
+        with _av2:
+            _av_preco = st.number_input("Preço pedido (R$):", min_value=50000, value=400000, step=10000, key="av_preco", format="%d")
+            _av_idade = st.selectbox("Idade do imóvel:", ["Lançamento/Planta","0-5 anos","5-15 anos","15-30 anos","Mais de 30 anos"], key="av_idade")
+            _av_estado = st.selectbox("Estado de conservação:", ["Excelente","Bom","Regular — precisa reformas","Precisa reforma completa"], key="av_estado")
+            _av_andar = st.text_input("Andar/localização:", key="av_andar", placeholder="Ex: 5º andar, térreo, perto do metrô...")
+        _av_dif = st.multiselect("Diferenciais:", ["Piscina","Academia","Portaria 24h","Playground","Área gourmet","Vista privilegiada","Varanda grande","Sol manhã","Alto padrão","Nenhum"], key="av_dif")
+        _av_obs = st.text_area("Informações adicionais:", height=70, key="av_obs", placeholder="Ex: Condomínio R$900/mês, IPTU R$2.400/ano, vizinhança tranquila...")
+        if st.button("🔍 AVALIAR IMÓVEL", key="btn_av", use_container_width=True):
+            _av_m2 = _av_preco / _av_area if _av_area > 0 else 0
+            _av_prompt = f"""Avalie se o preço está justo:
+- Tipo: {_av_tipo} | Local: {_av_cidade} | Área: {_av_area}m² | Quartos: {_av_quartos} | Vagas: {_av_vagas}
+- Preço: R$ {_av_preco:,.0f} (R$ {_av_m2:,.0f}/m²) | Idade: {_av_idade} | Estado: {_av_estado}
+- Andar: {_av_andar} | Diferenciais: {", ".join(_av_dif) or "nenhum"}
+- Obs: {_av_obs or "nenhuma"}
+
+Avalie: 1) Preço por m² vs mercado 2) Veredicto (ABAIXO/JUSTO/ACIMA) 3) Fatores que justificam ou penalizam 4) Margem de negociação estimada 5) Custos ocultos (ITBI, escritura, reforma) 6) Recomendação final"""
+            with st.spinner("Avaliando..."):
+                try:
+                    _client = Groq(api_key=st.session_state.api_key)
+                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_av_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    _res = _r.choices[0].message.content
+                    st.session_state["res_av"] = _res
+                    historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Avaliação","resumo":f"R${_av_preco:,.0f} {_av_cidade}","conteudo":_res})
+                    st.session_state.historico_consultor_imoveis = historico
+                    st.rerun()
+                except Exception as _e: st.error(f"Erro: {_e}")
+        if st.session_state.get("res_av"):
+            st.markdown(f"<div class='card'>{st.session_state['res_av']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar avaliação", data=st.session_state["res_av"], file_name="avaliacao.txt", key="dl_av")
 
     with _tab_contrato_imovel:
         st.header("📄 Análise de Contrato")
-        prompt_contrato_imovel = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_contrato_imovel", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_contrato_imovel", use_container_width=True):
-            if prompt_contrato_imovel.strip():
-                with st.spinner("A IA está analisando..."):
+        st.markdown("*Cole o contrato — a IA destaca cláusulas perigosas e o que negociar.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _co_tipo = st.selectbox("Tipo de contrato:", ["Compra e Venda","Locação (Aluguel)","Promessa de Compra e Venda","Financiamento bancário","Permuta","Outro"], key="co_tipo")
+        _co_texto = st.text_area("Cole o contrato ou os trechos principais:", height=220, key="co_texto", placeholder="Cole aqui as cláusulas, ou os pontos que geraram dúvida...")
+        _co_preoc = st.multiselect("O que mais te preocupa?", ["Multas por rescisão","Prazo de entrega","Reajuste","Responsabilidade por reformas","Garantias","Rescisão unilateral","Vícios ocultos","Não sei — analise tudo"], default=["Não sei — analise tudo"], key="co_preoc")
+        if st.button("📄 ANALISAR CONTRATO", key="btn_co", use_container_width=True):
+            if _co_texto.strip():
+                _co_prompt = f"""Analise este contrato de {_co_tipo}:
+Preocupações: {", ".join(_co_preoc)}
+
+CONTRATO:
+{_co_texto}
+
+Analise: 1) CLÁUSULAS PERIGOSAS (destaque cada uma) 2) O que está FALTANDO 3) O que pode ser NEGOCIADO 4) Multas — são abusivas? 5) Proteção legal ao comprador/locatário 6) Recomendação: ASSINAR / NEGOCIAR ANTES / CONSULTAR ADVOGADO"""
+                with st.spinner("Analisando contrato..."):
                     try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_contrato_imovel}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_contrato_imovel = resp.choices[0].message.content
-                        if resultado_contrato_imovel: st.session_state['res_contrato_imo_consul5'] = str(resultado_contrato_imovel)
-                        st.session_state["res_contrato_imovel"] = resultado_contrato_imovel
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Análise de Contrato","resumo":prompt_contrato_imovel[:60],"conteudo":resultado_contrato_imovel})
+                        _client = Groq(api_key=st.session_state.api_key)
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_co_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                        _res = _r.choices[0].message.content
+                        st.session_state["res_co"] = _res
+                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Contrato","resumo":_co_tipo,"conteudo":_res})
                         st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
+                        st.rerun()
+                    except Exception as _e: st.error(f"Erro: {_e}")
             else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_contrato_imovel"):
-            st.markdown(f"<div class='card'>{st.session_state['res_contrato_imovel']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_contrato_imovel"], file_name="contrato_imovel_resultado.txt", mime="text/plain", key="dl_contrato_imovel")
+                st.warning("Cole o contrato antes de analisar.")
+        if st.session_state.get("res_co"):
+            st.markdown(f"<div class='card'>{st.session_state['res_co']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar análise", data=st.session_state["res_co"], file_name="analise_contrato.txt", key="dl_co")
 
     with _tab_armadilhas:
         st.header("⚠️ Armadilhas Comuns")
-        prompt_armadilhas = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_armadilhas", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_armadilhas", use_container_width=True):
-            if prompt_armadilhas.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_armadilhas}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_armadilhas = resp.choices[0].message.content
-                        if resultado_armadilhas: st.session_state['res_armadilhas_consul6'] = str(resultado_armadilhas)
-                        st.session_state["res_armadilhas"] = resultado_armadilhas
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Armadilhas Comuns","resumo":prompt_armadilhas[:60],"conteudo":resultado_armadilhas})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_armadilhas"):
-            st.markdown(f"<div class='card'>{st.session_state['res_armadilhas']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_armadilhas"], file_name="armadilhas_resultado.txt", mime="text/plain", key="dl_armadilhas")
+        st.markdown("*Selecione seu momento e a IA lista os principais golpes, erros e como se proteger.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _am1, _am2 = st.columns(2)
+        with _am1:
+            _am_momento = st.selectbox("Em que momento você está?", ["Procurando para comprar","Prestes a assinar compra","Procurando para alugar","Prestes a assinar aluguel","Comprando na planta","Negociando financiamento","Acabei de comprar","Pensando em vender"], key="am_momento")
+            _am_tipo = st.selectbox("Tipo de imóvel:", ["Apartamento","Casa","Terreno","Comercial"], key="am_tipo")
+        with _am2:
+            _am_preoc = st.multiselect("O que mais te preocupa?", ["Golpes e fraudes","Cláusulas abusivas","Documentação irregular","Dívidas escondidas","Construtora problemática","Corretor desonesto","Preço superfaturado","Financiamento com pegadinha"], key="am_preoc")
+        if st.button("⚠️ VER ARMADILHAS DO MEU MOMENTO", key="btn_am", use_container_width=True):
+            _am_prompt = f"""Liste as principais armadilhas para alguém que está: {_am_momento}
+Tipo: {_am_tipo} | Preocupações: {", ".join(_am_preoc) or "geral"}
+
+Para cada armadilha: nome, como acontece, como identificar, como se proteger. Seja específico e prático."""
+            with st.spinner("Listando armadilhas..."):
+                try:
+                    _client = Groq(api_key=st.session_state.api_key)
+                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_am_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    _res = _r.choices[0].message.content
+                    st.session_state["res_am"] = _res
+                    historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Armadilhas","resumo":_am_momento,"conteudo":_res})
+                    st.session_state.historico_consultor_imoveis = historico
+                    st.rerun()
+                except Exception as _e: st.error(f"Erro: {_e}")
+        if st.session_state.get("res_am"):
+            st.markdown(f"<div class='card'>{st.session_state['res_am']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar", data=st.session_state["res_am"], file_name="armadilhas.txt", key="dl_am")
 
     with _tab_investimento_imovel:
         st.header("📈 Investimento em Imóveis")
-        prompt_investimento_imovel = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_investimento_imovel", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_investimento_imovel", use_container_width=True):
-            if prompt_investimento_imovel.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_investimento_imovel}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_investimento_imovel = resp.choices[0].message.content
-                        if resultado_investimento_imovel: st.session_state['res_investimento_consul7'] = str(resultado_investimento_imovel)
-                        st.session_state["res_investimento_imovel"] = resultado_investimento_imovel
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Investimento em Imóveis","resumo":prompt_investimento_imovel[:60],"conteudo":resultado_investimento_imovel})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_investimento_imovel"):
-            st.markdown(f"<div class='card'>{st.session_state['res_investimento_imovel']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_investimento_imovel"], file_name="investimento_imovel_resultado.txt", mime="text/plain", key="dl_investimento_imovel")
+        st.markdown("*Analise a rentabilidade real antes de decidir.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _iv1, _iv2 = st.columns(2)
+        with _iv1:
+            _iv_tipo = st.selectbox("Tipo de investimento:", ["Comprar para alugar","Comprar para revender","Planta para revenda","FIIs (comparar)","Flipping (compra+reforma+venda)"], key="iv_tipo")
+            _iv_valor = st.number_input("Valor do imóvel (R$):", min_value=50000, value=400000, step=10000, key="iv_valor", format="%d")
+            _iv_aluguel = st.number_input("Aluguel esperado (R$):", min_value=0, value=2500, step=100, key="iv_aluguel", format="%d")
+        with _iv2:
+            _iv_condo = st.number_input("Condomínio + IPTU mensal (R$):", min_value=0, value=1200, step=100, key="iv_condo", format="%d")
+            _iv_horizonte = st.selectbox("Horizonte de investimento:", ["1-2 anos","3-5 anos","5-10 anos","Mais de 10 anos"], key="iv_horizonte")
+            _iv_capital = st.number_input("Capital disponível total (R$):", min_value=0, value=500000, step=10000, key="iv_capital", format="%d")
+        _iv_obs = st.text_area("Contexto adicional:", height=70, key="iv_obs", placeholder="Ex: Já tenho imóvel próprio, região em valorização...")
+        if st.button("📈 ANALISAR INVESTIMENTO", key="btn_iv", use_container_width=True):
+            _iv_yield = (_iv_aluguel - _iv_condo) * 12 / _iv_valor * 100 if _iv_valor > 0 else 0
+            _iv_prompt = f"""Analise este investimento imobiliário:
+- Tipo: {_iv_tipo} | Valor: R$ {_iv_valor:,.0f} | Aluguel: R$ {_iv_aluguel:,.0f}/mês
+- Custos fixos: R$ {_iv_condo:,.0f}/mês | Yield bruto: {_iv_yield:.2f}% a.a.
+- Horizonte: {_iv_horizonte} | Capital disponível: R$ {_iv_capital:,.0f}
+- Obs: {_iv_obs or "nenhuma"}
+
+Analise: 1) Yield líquido real (vacância, manutenção, IR) 2) Comparação com Selic e FIIs 3) Valorização necessária para superar renda fixa 4) Riscos 5) VALE A PENA ou NÃO para este perfil"""
+            with st.spinner("Analisando investimento..."):
+                try:
+                    _client = Groq(api_key=st.session_state.api_key)
+                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_iv_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    _res = _r.choices[0].message.content
+                    st.session_state["res_iv"] = _res
+                    historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Investimento","resumo":f"R${_iv_valor:,.0f}","conteudo":_res})
+                    st.session_state.historico_consultor_imoveis = historico
+                    st.rerun()
+                except Exception as _e: st.error(f"Erro: {_e}")
+        if st.session_state.get("res_iv"):
+            st.markdown(f"<div class='card'>{st.session_state['res_iv']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar análise", data=st.session_state["res_iv"], file_name="investimento.txt", key="dl_iv")
 
     with _tab_na_planta:
         st.header("🏗️ Imóvel na Planta")
-        prompt_na_planta = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_na_planta", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_na_planta", use_container_width=True):
-            if prompt_na_planta.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_na_planta}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_na_planta = resp.choices[0].message.content
-                        if resultado_na_planta: st.session_state['res_na_planta_consul8'] = str(resultado_na_planta)
-                        st.session_state["res_na_planta"] = resultado_na_planta
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Imóvel na Planta","resumo":prompt_na_planta[:60],"conteudo":resultado_na_planta})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_na_planta"):
-            st.markdown(f"<div class='card'>{st.session_state['res_na_planta']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_na_planta"], file_name="na_planta_resultado.txt", mime="text/plain", key="dl_na_planta")
+        st.markdown("*Tudo que verificar antes de assinar com a construtora.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _pl1, _pl2 = st.columns(2)
+        with _pl1:
+            _pl_const = st.text_input("Nome da construtora:", key="pl_const", placeholder="Ex: MRV, Cyrela, construtora local...")
+            _pl_preco = st.number_input("Valor total (R$):", min_value=50000, value=350000, step=10000, key="pl_preco", format="%d")
+            _pl_entrada = st.number_input("Entrada durante obra (R$):", min_value=0, value=70000, step=5000, key="pl_entrada", format="%d")
+        with _pl2:
+            _pl_prazo = st.text_input("Prazo de entrega prometido:", key="pl_prazo", placeholder="Ex: Dezembro de 2027")
+            _pl_tipo = st.selectbox("Tipo:", ["Apartamento","Casa em condomínio","Loteamento"], key="pl_tipo")
+            _pl_fin = st.selectbox("Financiamento após obra:", ["Banco (SBPE)","Minha Casa Minha Vida","Pela construtora","Não definido"], key="pl_fin")
+        _pl_preoc = st.multiselect("O que mais te preocupa?", ["Construtora desconhecida","Prazo de entrega","Qualidade do acabamento","Mudança de projeto","O que fazer se atrasar","Distrato — posso desistir?","Parcela após entrega","Documentação do terreno"], key="pl_preoc")
+        _pl_obs = st.text_area("Informações adicionais:", height=70, key="pl_obs", placeholder="Ex: Unidade de 58m², 2 quartos, 8º andar...")
+        if st.button("🏗️ ANALISAR COMPRA NA PLANTA", key="btn_pl", use_container_width=True):
+            _pl_prompt = f"""Analise esta compra na planta:
+- Construtora: {_pl_const or "não informada"} | Tipo: {_pl_tipo}
+- Valor: R$ {_pl_preco:,.0f} | Entrada: R$ {_pl_entrada:,.0f} | Entrega: {_pl_prazo}
+- Financiamento pós-obra: {_pl_fin} | Preocupações: {", ".join(_pl_preoc) or "geral"}
+- Obs: {_pl_obs or "nenhuma"}
+
+Oriente: 1) O que verificar ANTES de assinar (RGI, alvará, memorial descritivo) 2) Direitos em caso de atraso (Lei do Distrato) 3) Cláusulas que não podem mudar 4) Riscos desta situação 5) Checklist de documentos 6) Como calcular parcela pós-entrega"""
+            with st.spinner("Analisando..."):
+                try:
+                    _client = Groq(api_key=st.session_state.api_key)
+                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_pl_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    _res = _r.choices[0].message.content
+                    st.session_state["res_pl"] = _res
+                    historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Na Planta","resumo":f"{_pl_const} R${_pl_preco:,.0f}","conteudo":_res})
+                    st.session_state.historico_consultor_imoveis = historico
+                    st.rerun()
+                except Exception as _e: st.error(f"Erro: {_e}")
+        if st.session_state.get("res_pl"):
+            st.markdown(f"<div class='card'>{st.session_state['res_pl']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar", data=st.session_state["res_pl"], file_name="imovel_planta.txt", key="dl_pl")
 
     with _tab_negociacao_imovel:
-        st.header("💡 Dicas de Negociação")
-        prompt_negociacao_imovel = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_negociacao_imovel", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_negociacao_imovel", use_container_width=True):
-            if prompt_negociacao_imovel.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_negociacao_imovel}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_negociacao_imovel = resp.choices[0].message.content
-                        if resultado_negociacao_imovel: st.session_state['res_negociacao_i_consul9'] = str(resultado_negociacao_imovel)
-                        st.session_state["res_negociacao_imovel"] = resultado_negociacao_imovel
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Dicas de Negociação","resumo":prompt_negociacao_imovel[:60],"conteudo":resultado_negociacao_imovel})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_negociacao_imovel"):
-            st.markdown(f"<div class='card'>{st.session_state['res_negociacao_imovel']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_negociacao_imovel"], file_name="negociacao_imovel_resultado.txt", mime="text/plain", key="dl_negociacao_imovel")
+        st.header("💡 Estratégia de Negociação")
+        st.markdown("*Descreva a situação e a IA monta estratégia para conseguir o melhor preço.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _ng1, _ng2 = st.columns(2)
+        with _ng1:
+            _ng_preco = st.number_input("Preço pedido (R$):", min_value=10000, value=400000, step=5000, key="ng_preco", format="%d")
+            _ng_meta = st.number_input("Quanto você quer pagar (R$):", min_value=10000, value=370000, step=5000, key="ng_meta", format="%d")
+            _ng_tempo = st.selectbox("Há quanto tempo está anunciado?", ["Acabou de sair","1-3 meses","3-6 meses","Mais de 6 meses","Não sei"], key="ng_tempo")
+        with _ng2:
+            _ng_motiv = st.selectbox("Motivação do vendedor:", ["Não sei","Urgência — precisa vender logo","Mudança de cidade","Necessidade financeira","Sem urgência","Inventário/espólio"], key="ng_motiv")
+            _ng_pagto = st.selectbox("Forma de pagamento:", ["À vista","Financiamento bancário","FGTS + financiamento","Parcelado com vendedor"], key="ng_pagto")
+            _ng_extras = st.multiselect("Além do preço, negociar:", ["Mobília incluída","Pintura nova","Reparos antes da entrega","Prazo de entrega","Isenção de ITBI"], key="ng_extras")
+        _ng_obs = st.text_area("Contexto da negociação:", height=70, key="ng_obs", placeholder="Ex: Visitei 3x, dono mora fora, está há 8 meses no mercado...")
+        if st.button("💡 MONTAR ESTRATÉGIA DE NEGOCIAÇÃO", key="btn_ng", use_container_width=True):
+            _ng_desc = (_ng_preco - _ng_meta) / _ng_preco * 100 if _ng_preco > 0 else 0
+            _ng_prompt = f"""Monte estratégia de negociação:
+- Preço pedido: R$ {_ng_preco:,.0f} | Meta: R$ {_ng_meta:,.0f} (desconto {_ng_desc:.1f}%)
+- Tempo no mercado: {_ng_tempo} | Motivação vendedor: {_ng_motiv}
+- Pagamento: {_ng_pagto} | Extras a negociar: {", ".join(_ng_extras) or "só o preço"}
+- Contexto: {_ng_obs or "nenhum"}
+
+Forneça: 1) Análise do poder de barganha 2) Estratégia passo a passo 3) Primeira oferta recomendada e justificativa 4) Como apresentar a proposta 5) Como responder contrapropostas 6) Quando aceitar"""
+            with st.spinner("Montando estratégia..."):
+                try:
+                    _client = Groq(api_key=st.session_state.api_key)
+                    _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_ng_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                    _res = _r.choices[0].message.content
+                    st.session_state["res_ng"] = _res
+                    historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Negociação","resumo":f"R${_ng_preco:,.0f}→R${_ng_meta:,.0f}","conteudo":_res})
+                    st.session_state.historico_consultor_imoveis = historico
+                    st.rerun()
+                except Exception as _e: st.error(f"Erro: {_e}")
+        if st.session_state.get("res_ng"):
+            st.markdown(f"<div class='card'>{st.session_state['res_ng']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar estratégia", data=st.session_state["res_ng"], file_name="negociacao.txt", key="dl_ng")
 
     with _tab_simulacoes:
-        st.header("📊 Simulações")
-        prompt_simulacoes = st.text_area("Descreva sua situação ou dúvida:", height=120, key="prompt_simulacoes", placeholder="Digite aqui...")
-        if st.button("🤖 GERAR COM IA", key="btn_simulacoes", use_container_width=True):
-            if prompt_simulacoes.strip():
-                with st.spinner("A IA está analisando..."):
-                    try:
-                        client = Groq(api_key=st.session_state.api_key)
-                        msgs = [{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt_simulacoes}]
-                        resp = client.chat.completions.create(messages=msgs, model="openai/gpt-oss-120b", max_tokens=2048)
-                        resultado_simulacoes = resp.choices[0].message.content
-                        if resultado_simulacoes: st.session_state['res_simulacoes_consul10'] = str(resultado_simulacoes)
-                        st.session_state["res_simulacoes"] = resultado_simulacoes
-                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Simulações","resumo":prompt_simulacoes[:60],"conteudo":resultado_simulacoes})
-                        st.session_state.historico_consultor_imoveis = historico
-                    except Exception as e:
-                        st.error(f"Erro na API: {e}")
-            else:
-                st.warning("Digite sua situação antes de gerar.")
-        if st.session_state.get("res_simulacoes"):
-            st.markdown(f"<div class='card'>{st.session_state['res_simulacoes']}</div>", unsafe_allow_html=True)
-            st.download_button("📋 Baixar resultado", data=st.session_state["res_simulacoes"], file_name="simulacoes_resultado.txt", mime="text/plain", key="dl_simulacoes")
+        st.header("📊 Simulações Comparativas")
+        st.markdown("*Compare cenários lado a lado para tomar a melhor decisão.*")
+        st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+        _sm_tipo = st.selectbox("O que quer comparar?", [
+            "Comprar à vista vs financiado",
+            "Comprar vs alugar + investir a diferença",
+            "SAC vs PRICE — qual amortização vale mais",
+            "Imóvel A vs Imóvel B — qual comprar",
+            "Comprar agora vs esperar 2 anos",
+            "Vender e alugar vs manter e alugar",
+        ], key="sm_tipo")
+        _sm_desc = st.text_area("Descreva os cenários com os números:", height=150, key="sm_desc",
+            placeholder="Ex: Tenho R$400mil. Opção 1: comprar à vista. Opção 2: dar R$80mil de entrada e financiar em 30 anos com parcela de R$2.800...")
+        if st.button("📊 SIMULAR E COMPARAR", key="btn_sm", use_container_width=True):
+            if _sm_desc.strip():
+                _sm_prompt = f"""Compare estes cenários — tipo: {_sm_tipo}
 
+{_sm_desc}
+
+Simule: 1) Tabela comparativa com números 2) Custo total em 10 e 20 anos 3) Ponto de equilíbrio 4) Vantagens e desvantagens 5) Recomendação clara"""
+                with st.spinner("Simulando cenários..."):
+                    try:
+                        _client = Groq(api_key=st.session_state.api_key)
+                        _r = _client.chat.completions.create(messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_sm_prompt}], model="openai/gpt-oss-120b", max_tokens=2048)
+                        _res = _r.choices[0].message.content
+                        st.session_state["res_sm"] = _res
+                        historico.append({"data":datetime.now().strftime("%d/%m %H:%M"),"aba":"Simulação","resumo":_sm_tipo,"conteudo":_res})
+                        st.session_state.historico_consultor_imoveis = historico
+                        st.rerun()
+                    except Exception as _e: st.error(f"Erro: {_e}")
+            else:
+                st.warning("Descreva os cenários antes de simular.")
+        if st.session_state.get("res_sm"):
+            st.markdown(f"<div class='card'>{st.session_state['res_sm']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar simulação", data=st.session_state["res_sm"], file_name="simulacao.txt", key="dl_sm")
 
 # --- RODAPÉ ---
 st.markdown("<hr class='divider'>", unsafe_allow_html=True)
