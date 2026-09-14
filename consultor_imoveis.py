@@ -290,27 +290,34 @@ Analise: 1) Características típicas da região 2) Pontos fortes e fracos para 
                 try:
                     _client = Groq(api_key=st.session_state.api_key)
                     # Usar compound-beta para busca web real — verifica estabelecimentos que existem
-                    _br_prompt_web = f"""Pesquise na web e analise o bairro/região {_br_nome} em {_br_cidade} para {_br_uso}.
+                    _br_prompt_web = f"""Você tem acesso à busca na web. USE AGORA para pesquisar informações reais sobre o bairro {_br_nome} em {_br_cidade}.
 
-Perfil do comprador: {_br_perfil}
-Prioridades: {", ".join(_br_prior)}
-Preço m²: {_br_m2 or "não informado"}
-Observações: {_br_obs or "nenhuma"}
+Faça as seguintes buscas e reporte O QUE ENCONTROU:
+1. Busque: "escolas bairro {_br_nome} {_br_cidade}" — liste as escolas encontradas com nome real
+2. Busque: "supermercado bairro {_br_nome} {_br_cidade}" — liste os supermercados encontrados com nome real
+3. Busque: "hospital UBS posto de saúde {_br_nome} {_br_cidade}" — liste os serviços de saúde encontrados
+4. Busque: "ônibus transporte {_br_cidade} {_br_nome}" — informe linhas reais se encontrar
+5. Busque: "bairro {_br_nome} {_br_cidade} imóveis" — informe características e preço m² se encontrar
 
-IMPORTANTE: Pesquise na web e cite APENAS estabelecimentos, escolas, hospitais, linhas de transporte e serviços que você VERIFICOU QUE EXISTEM nesta cidade/bairro. Se não encontrar informações verificadas, diga explicitamente "não encontrei dados verificados sobre X — recomendo pesquisar no Google Maps".
+Perfil: {_br_perfil} | Prioridades: {", ".join(_br_prior)} | Uso: {_br_uso}
 
-Analise: 1) Características reais da região 2) Estabelecimentos verificados (escolas, hospitais, supermercados, transporte) 3) Pontos fortes e fracos para este perfil 4) Tendência de valorização 5) O que pesquisar antes de fechar"""
+REGRAS ABSOLUTAS:
+- Cite APENAS o que encontrou na busca com nome real e verificado
+- Se não encontrou resultado para algo, escreva: "Não encontrei dados verificados sobre [item] neste bairro — pesquise no Google Maps"
+- NUNCA escreva "costuma ter" ou "tipicamente existe" — isso é invenção
+- NUNCA sugira que o usuário busque algo que você poderia ter buscado
+- Se a busca retornar resultados, cite o nome real do estabelecimento"""
                     try:
-                        # Tentar com compound-beta (tem web search nativo)
+                        # compound-beta: busca web nativa — cita apenas o que existe
                         _r = _client.chat.completions.create(
                             messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":_br_prompt_web}],
                             model="compound-beta",
-                            max_tokens=2048
+                            max_tokens=3000
                         )
                     except:
-                        # Fallback: modelo padrão sem web search
+                        # Fallback sem web search — só dados genéricos e honestos
                         _r = _client.chat.completions.create(
-                            messages=[{"role":"system","content":SYSTEM_PROMPT + " NUNCA invente nomes de estabelecimentos. Use apenas termos genéricos para infraestrutura local."},{"role":"user","content":_br_prompt_web}],
+                            messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":f"Analise o bairro {_br_nome} em {_br_cidade} para {_br_perfil} com foco em: {', '.join(_br_prior)}. IMPORTANTE: você NÃO tem acesso à internet agora. Por isso, cite APENAS características gerais típicas de cidades brasileiras de médio porte. Para cada item de infraestrutura, oriente a buscar no Google Maps com o termo exato. Não invente nomes."}],
                             model="openai/gpt-oss-120b",
                             max_tokens=2048
                         )
