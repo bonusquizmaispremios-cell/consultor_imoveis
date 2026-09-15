@@ -545,10 +545,10 @@ Recomendação final + 🟢/🟡/🔴. SEMPRE ressalve que não substitui advoga
         }
         _lista = _chklst.get(_doc_tipo, [])
         if _lista:
-            for _cat, _docs in _lista:
+            for _ii, (_cat, _docs) in enumerate(_lista):
                 st.markdown(f"**{_cat}**")
-                for _d in _docs:
-                    st.checkbox(_d, key=f"chk_{_d[:25].replace(' ','_').replace('/','')}")
+                for _di, _d in enumerate(_docs):
+                    st.checkbox(_d, key=f"chk_{_ii}_{_di}")
         else:
             st.info("Oriente pela IA para esta operação.")
         if st.button("🤖 ORIENTAÇÃO PERSONALIZADA", key="btn_doc", use_container_width=True):
