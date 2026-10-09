@@ -6,6 +6,18 @@ import json
 st.set_page_config(page_title="Consultor de Imóveis IA", page_icon="🏠", layout="wide")
 
 st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+[data-testid="stToolbar"] {visibility: hidden;}
+[data-testid="stDecoration"] {visibility: hidden;}
+[data-testid="stStatusWidget"] {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     .stApp { background-color:#F0F9FF; font-family:'Inter',sans-serif; }
@@ -139,7 +151,7 @@ for k,v in defaults.items():
 # ── LOGIN ──
 if st.session_state.etapa == "Login":
     st.markdown("# 🏠 Consultor de Imóveis IA")
-    st.markdown("<div class='card'><b>🔒 ACESSO RESTRITO A CLIENTES DO QUIZ COM PRÊMIOS</b><br>🔗 <a href='https://quizcompremios.com.br' target='_blank' style='color:#4F46E5;font-weight:700;text-decoration:underline;'>quizcompremios.com.br</a></div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'><b>🔒 ACESSO RESTRITO A CLIENTES DO MEUSAGENTESIA.COM.BR</b><br>🔗 <a href='https://meusagentesia.com.br' target='_blank' style='color:#4F46E5;font-weight:700;text-decoration:underline;'>meusagentesia.com.br</a></div>", unsafe_allow_html=True)
     st.info("💻 **Dica:** No computador a experiência é mais agradável.")
     nome  = st.text_input("Seu Nome:", key="nome_login")
     chave = st.text_input("🔑 Chave API da Groq:", type="password", key="chave_login")
@@ -718,4 +730,4 @@ Forneça: 1) Tabela comparativa com números 2) Custo total em 5, 10 e 20 anos 3
 
 # ── RODAPÉ ──
 st.markdown("<hr class='divider'>", unsafe_allow_html=True)
-st.markdown("<div style='text-align:center;font-size:0.75em;color:#94A3B8;'>© 2026 Consultor de Imóveis IA · Quiz Com Prêmios · <a href='https://quizcompremios.com.br' target='_blank' style='color:#4F46E5;'>quizcompremios.com.br</a></div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center;font-size:0.75em;color:#94A3B8;'>© 2026 Consultor de Imóveis IA · MeusAgentesIA.com.br · <a href='https://meusagentesia.com.br' target='_blank' style='color:#4F46E5;'>meusagentesia.com.br</a></div>", unsafe_allow_html=True)
